@@ -110,6 +110,8 @@ public class WeatherWidget extends pmwApplication {
 		}
 		
 		DecimalFormat df = new DecimalFormat("###.0");
+		DecimalFormat pf = new DecimalFormat("##.00");
+		DecimalFormat wf = new DecimalFormat("###");
 	 			
 		while (frame != null && frame.isRunning()) {
 			
@@ -143,10 +145,10 @@ public class WeatherWidget extends pmwApplication {
 						sb.append("\n Wind Speed: " + getXMLValue(line, "<wind_string>") + " ");
 					}
 					if (line.contains("\"speed\":")) {
-						sb.append("\n Wind Speed: " + df.format(getJSONDouble(line, "speed")) + " ");
+						sb.append("\n Wind Speed: " + df.format(getJSONDouble(line, "speed")) + " MPH ");
 					}
 					if (line.contains("\"deg\":")) {
-						sb.append("\n Wind Direction: " + getJSONDouble(line, "deg") + WeatherWidgetFrame.DEGREES + " ");
+						sb.append("\n Wind Direction: " + wf.format(getJSONDouble(line, "deg")) + WeatherWidgetFrame.DEGREES + " ");
 					}
 					if (line.startsWith("dew_point|")) {
 						sb.append("\n Dew Point: " + getWeatherValue(line, "dew_point|") + WeatherWidgetFrame.DEGREES + " ");
@@ -173,7 +175,7 @@ public class WeatherWidget extends pmwApplication {
 						sb.append("\n Pressure: " + getXMLValue(line, "<pressure_in>") + " inches ");
 					}
 					if (line.contains("\"pressure\":")) {
-						sb.append("\n Pressure: " + df.format((Double.valueOf(getJSONDouble(line, "pressure"))/33.863889532610884)) + " ");
+						sb.append("\n Pressure: " + pf.format((Double.valueOf(getJSONDouble(line, "pressure"))/33.863889532610884)) + " inches ");
 					}
 					if (line.startsWith("rain|")) {
 						sb.append("\n Rainfall: " + getWeatherValue(line, "rain|") + " inches ");
