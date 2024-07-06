@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2023 Paul Walters
+ * Copyright 2015-2024 Paul Walters
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.security.KeyStore;
+import java.text.DecimalFormat;
 import java.util.Properties;
 
 import javax.net.ssl.KeyManager;
@@ -37,8 +38,8 @@ import com.pmw.pmwApplication;
 public class WeatherWidget extends pmwApplication {
 
 	private static final String appName = new String("Weather Widget");
-	private static final String appVersion = new String("v2023.1");
-    private static final String appCopyright = new String("Copyright 2015-2023");
+	private static final String appVersion = new String("v2024.1");
+    private static final String appCopyright = new String("Copyright 2015-2024");
     private static final String appAuthor = new String("Paul Walters");
 
 	public WeatherWidget() {
@@ -53,7 +54,14 @@ public class WeatherWidget extends pmwApplication {
 			Properties props = getAppProperties();
 			if (props.isEmpty()) {
 				props.put("showWeatherURL", "https://www.weather.gov/lwx");
-				props.put("wxConditionsURL", "https://w1.weather.gov/xml/current_obs/KBWI.xml");
+
+				String apiKey = ""; // TODO must provide an valid openweathermap API key and desired location
+				String cityName = "New York,NY,US";	
+				props.put("wxConditionsURL", "http://api.openweathermap.org/data/2.5/weather?"
+						+ "q=" + cityName
+						+ "&units=imperial&mode=json"
+						+ "&appid="+apiKey);
+
 				saveAppProperties(new File(propFile));
 			}
 
@@ -100,6 +108,8 @@ public class WeatherWidget extends pmwApplication {
 				 System.exit(-1);
 			 }
 		}
+		
+		DecimalFormat df = new DecimalFormat("###.0");
 	 			
 		while (frame != null && frame.isRunning()) {
 			
@@ -116,47 +126,70 @@ public class WeatherWidget extends pmwApplication {
 						frame.setIconTemperature(Math.round(Double.parseDouble(temperature)));
 						sb.append("\n Temperature: " + temperature + WeatherWidgetFrame.DEGREES + " ");
 					}
-					else if (line.contains("<temp_f>")) {
+					if (line.contains("<temp_f>")) {
 						String temperature = getXMLValue(line, "<temp_f>");
 						frame.setIconTemperature(Math.round(Double.parseDouble(temperature)));
 						sb.append("\n Temperature: " + temperature + WeatherWidgetFrame.DEGREES + " ");
 					}
-					else if (line.startsWith("wind_gust|") && line.length() > 10) {
+					if (line.contains("\"temp\":")) {
+						double temperature = getJSONDouble(line, "temp");
+						frame.setIconTemperature(Math.round(temperature));
+						sb.append("\n Temperature: " + df.format(temperature) + WeatherWidgetFrame.DEGREES + " ");
+					}
+					if (line.startsWith("wind_gust|") && line.length() > 10) {
 						sb.append("\n Wind Speed: " + getWeatherValue(line, "wind_gust|").substring(6) + " ");
 					}
-					else if (line.contains("<wind_string>")) {
+					if (line.contains("<wind_string>")) {
 						sb.append("\n Wind Speed: " + getXMLValue(line, "<wind_string>") + " ");
 					}
-					else if (line.startsWith("dew_point|")) {
+					if (line.contains("\"speed\":")) {
+						sb.append("\n Wind Speed: " + df.format(getJSONDouble(line, "speed")) + " ");
+					}
+					if (line.contains("\"deg\":")) {
+						sb.append("\n Wind Direction: " + getJSONDouble(line, "deg") + WeatherWidgetFrame.DEGREES + " ");
+					}
+					if (line.startsWith("dew_point|")) {
 						sb.append("\n Dew Point: " + getWeatherValue(line, "dew_point|") + WeatherWidgetFrame.DEGREES + " ");
 					}
-					else if (line.contains("<dewpoint_f>")) {
+					if (line.contains("<dewpoint_f>")) {
 						sb.append("\n Dew Point: " + getXMLValue(line, "<dewpoint_f>") + WeatherWidgetFrame.DEGREES + " ");
 					}
-					else if (line.startsWith("humidity|")) {
+					if (line.contains("\"feels_like\":")) {
+						sb.append("\n Feels Like: " + df.format(getJSONDouble(line, "feels_like")) + WeatherWidgetFrame.DEGREES + " ");
+					}
+					if (line.startsWith("humidity|")) {
 						sb.append("\n Humidity: " + getWeatherValue(line, "humidity|") + " ");
 					}
-					else if (line.contains("<relative_humidity>")) {
+					if (line.contains("<relative_humidity>")) {
 						sb.append("\n Humidity: " + getXMLValue(line, "<relative_humidity>") + "% ");
 					}
-					else if (line.startsWith("pressure|")) {
-						sb.append("\n Pressure: " + getWeatherValue(line, "wind_dir|") + " ");
+					if (line.contains("\"humidity\":")) {
+						sb.append("\n Humidity: " + getJSONDouble(line, "humidity") + "% ");
 					}
-					else if (line.contains("<pressure_in>")) {
+					if (line.startsWith("pressure|")) {
+						sb.append("\n Pressure: " + getWeatherValue(line, "pressure|") + " ");
+					}
+					if (line.contains("<pressure_in>")) {
 						sb.append("\n Pressure: " + getXMLValue(line, "<pressure_in>") + " inches ");
 					}
-					else if (line.startsWith("rain|")) {
+					if (line.contains("\"pressure\":")) {
+						sb.append("\n Pressure: " + df.format((Double.valueOf(getJSONDouble(line, "pressure"))/33.863889532610884)) + " ");
+					}
+					if (line.startsWith("rain|")) {
 						sb.append("\n Rainfall: " + getWeatherValue(line, "rain|") + " inches ");
 					}
-					else if (line.startsWith("current_wx|")) {
+					if (line.startsWith("current_wx|")) {
 						sb.append("\n Weather: " + getWeatherValue(line, "current_wx|") + " ");
 					}
-					else if (line.contains("<weather>")) {
+					if (line.contains("<weather>")) {
 						sb.append("\n Weather: " + getXMLValue(line, "<weather>") + " ");
 					}
-					else if (line.startsWith("period_0_weather|")) {
+					if (line.startsWith("period_0_weather|")) {
 						if (sb.length() > 0) sb.append("\n");
 						sb.append("\n" + getWeatherValue(line, "period_0_weather|") + " ");
+					}
+					if (line.contains("\"main\":")) {
+						sb.append("\n Weather: " + getJSONValue(line, "main") + " ");
 					}
 				}
 				in.close();
@@ -191,6 +224,42 @@ public class WeatherWidget extends pmwApplication {
 		if (endIndex < 0) return line;
 		
 		return line.substring(keyIndex+key.length(),endIndex);
+	}
+	
+	public double getJSONDouble(String line, String key) {
+		return Double.parseDouble(getJSONValue(line, key));
+	}
+
+	public String getJSONValue(String line, String key) {
+		if (!key.startsWith("\"")) {
+			key = "\"" + key + "\"";
+		}
+		if (!key.endsWith(":")) {
+			key = key + ":";
+		}
+		int keyIndex = line.indexOf(key);
+		if (keyIndex < 0) return line;
+		
+		int commaIndex = line.indexOf(",",keyIndex+key.length());
+		int bracketIndex = line.indexOf("}",keyIndex+key.length());
+		
+		int endIndex = -1;
+		if (commaIndex > 0 && (bracketIndex == -1 || commaIndex < bracketIndex)) {
+			endIndex = commaIndex;
+		}
+		else if (bracketIndex > 0) {
+			endIndex = bracketIndex;
+		}
+		
+		line = line.substring(keyIndex+key.length(),endIndex);
+		
+		if (line.startsWith("\"")) {
+			line = line.substring(1);
+		}
+		if (line.endsWith("\"")) {
+			line = line.substring(0, line.length()-1);
+		}
+		return line;
 	}
 
 	public static void main(String[] args) {
