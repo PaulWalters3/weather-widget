@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2024 Paul Walters
+ * Copyright 2015-2025 Paul Walters
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class WeatherWidget extends pmwApplication {
 						sb.append("\n Temperature: " + df.format(temperature) + WeatherWidgetFrame.DEGREES + " ");
 					}
 					if (line.startsWith("wind_gust|") && line.length() > 10) {
-						sb.append("\n Wind Speed: " + getWeatherValue(line, "wind_gust|").substring(6) + " ");
+						sb.append("\n Wind Speed: " + getWeatherValue(line, "wind_gust|") + " ");
 					}
 					if (line.contains("<wind_string>")) {
 						sb.append("\n Wind Speed: " + getXMLValue(line, "<wind_string>") + " ");
