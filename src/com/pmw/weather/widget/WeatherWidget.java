@@ -83,8 +83,7 @@ public class WeatherWidget extends pmwApplication {
 
 		String myCert = getAppProperties().getProperty("trustStore");
 		if (myCert != null && !myCert.isBlank()) {
-			 try {
-				 InputStream is = WeatherWidget.class.getResourceAsStream(myCert);
+			 try (InputStream is = WeatherWidget.class.getResourceAsStream(myCert)) {
 				 
 				 KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 				 keyStore.load(null);
@@ -101,9 +100,9 @@ public class WeatherWidget extends pmwApplication {
 				 SSLContext sslContext = SSLContext.getInstance("SSL");
 				 sslContext.init(keyManagers, trustManagers,  null);
 				 SSLContext.setDefault(sslContext);
-				 is.close();
 			 }
 			 catch (Exception ex) {
+				 ex.printStackTrace();
 				 System.err.println("Error opening " + myCert + ": " + ex.getMessage());
 				 System.exit(-1);
 			 }
